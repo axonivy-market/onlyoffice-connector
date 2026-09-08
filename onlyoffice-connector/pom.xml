@@ -28,7 +28,17 @@
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
 			<version>${jjwt.version}</version>
-		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
+			<exclusions>
+               <exclusion>
+                  <groupId>*</groupId>
+                  <artifactId>*</artifactId>
+               </exlusion>
+             </exclusions>
+          </dependency>
 	</dependencies>
 	<pluginRepositories>
 		<!-- Snapshot releases are available via sonatype.org -->
