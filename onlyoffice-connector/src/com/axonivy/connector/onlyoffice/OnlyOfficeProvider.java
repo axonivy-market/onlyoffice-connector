@@ -15,7 +15,7 @@ import org.apache.logging.log4j.message.MessageFormatMessageFactory;
 
 /**
  * Currently, CSRF can only be switched on or off for the whole engine. This Provider implements
- * exceptions for state-chaing (not GET) REST calls, so that they do not require the X-Requested-By header.
+ * exceptions for state-changing (not GET) REST calls, so that they do not require the X-Requested-By header.
  */
 @Provider
 @PreMatching
