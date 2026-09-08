@@ -1,15 +1,15 @@
 # yaml-language-server: $schema=https://json-schema.axonivy.com/app/12.0.0/variables.json
 Variables:
-	com:
-	  axonivy:
-	    connector:
-	      onlyoffice:
-	        # This secret must be at least 32 characters long and match the secret configured in the OnlyOffice server.
-	        #[password]
-	        jwtsecret: ${decrypt:UQlfq+ttCrNw6aqKPuQ17m8DvC0n8XvoINrqObbCWNtttndgwjTUWga3VZmSP5MC}
-	        # The base URL for document callbacks from OnlyOffice to AxonIvy.
-	        documentsBaseUrl: http://host.docker.internal:8081/designer/api/documents
-	        # The base URL of the document server as seen from the AxonIvy Engine.
-	        documentServerInternalBaseUrl: http://localhost:81
-	        # The base URL of the document server as seen from the user's browser.
-	        documentServerExternalBaseUrl: http://localhost:81
+    com:
+      axonivy:
+        connector:
+          onlyoffice:
+            # This secret must be at least 32 characters long and match the secret configured in the OnlyOffice server.
+            #[password]
+            jwtsecret: ${decrypt:UQlfq+ttCrNw6aqKPuQ17m8DvC0n8XvoINrqObbCWNtttndgwjTUWga3VZmSP5MC}
+            # The base URL for document callbacks from OnlyOffice to AxonIvy.
+            documentsBaseUrl: http://host.docker.internal:8081/designer/api/documents
+            # The base URL of the document server as seen from the AxonIvy Engine.
+            documentServerInternalBaseUrl: http://localhost:81
+            # The base URL of the document server as seen from the user's browser.
+            documentServerExternalBaseUrl: http://localhost:81
