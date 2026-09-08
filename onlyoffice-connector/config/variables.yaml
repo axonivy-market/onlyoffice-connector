@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://json-schema.axonivy.com/app/12.0.0/variables.json
+Variables:
+  com:
+    axonivy:
+      connector:
+        onlyoffice:
+          # This secret must be at least 32 characters long and match the secret configured in the OnlyOffice server.
+          #[password]
+          jwtsecret: ""
+          # The base URL for document callbacks from OnlyOffice to AxonIvy.
+          documentsBaseUrl: ""
+          # The base URL of the document server as seen from the AxonIvy Engine.
+          documentServerInternalBaseUrl: ""
+          # The base URL of the document server as seen from the user's browser.
+          documentServerExternalBaseUrl: ""

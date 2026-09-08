@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<role>
+    <identifier>Everybody</identifier>
+    <role>
+        <identifier>Author</identifier>
+    </role>
+    <role>
+        <identifier>Reviewer</identifier>
+    </role>
+    <role>
+        <identifier>Compliance</identifier>
+    </role>
+</role>
