@@ -46,7 +46,7 @@ public class OnlyOfficeService {
 	private static final String VAR_TMPL = "com.axonivy.connector.onlyoffice.%s";
 	private static final UUID CLIENT_ID = UUID.fromString("37a13dba-9085-4c3b-a2bf-6694927b75de");
 	private static final String ONLYOFFICE_DOCUMENT_PROVIDER_SUBPROCESS_SIGNATURE = "provideOnlyOfficeDocumentHandler()";
-	private OnlyOfficeDocumentHandler onlyOfficeDocumentHandler = null;
+	private static OnlyOfficeDocumentHandler onlyOfficeDocumentHandler = null;
 
 	public static OnlyOfficeService get() {
 		return INSTANCE;
@@ -320,15 +320,16 @@ public class OnlyOfficeService {
 		}
 	}
 
-	public static void main(String[] args) {
-		var map = new LinkedHashMap<String, Object>();
-
-		var svc = OnlyOfficeService.get();
-
-		svc.putIfAbsent(map, "docx", "document", "fileType");
-		svc.putIfAbsent(map, "test.docs", "document", "title");
-		svc.putIfAbsent(map, "User1", "editorConfig", "user", "id");
-
-		System.out.println("Map: %s".formatted(map));
+	/**
+	 * Provide own {@link OnlyOfficeDocumentHandler} for testing.
+	 *
+	 * Note: this function should only be used for testing. Since there exists only one
+	 * instance of this handler, do not set to different values while multiple tests
+	 * could run in parallel!
+	 *
+	 * @param handler
+	 */
+	static void setOnlyOfficeDocumentHandlerForTesting(OnlyOfficeDocumentHandler handler) {
+		onlyOfficeDocumentHandler = handler;
 	}
 }

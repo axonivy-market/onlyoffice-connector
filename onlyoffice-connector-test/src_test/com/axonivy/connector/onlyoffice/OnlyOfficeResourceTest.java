@@ -8,9 +8,8 @@ import java.io.InputStream;
 
 import javax.ws.rs.client.WebTarget;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeDocumentHandler;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -21,7 +20,7 @@ import ch.ivyteam.ivy.environment.IvyTest;
 
 @IvyTest(enableWebServer = true)
 public class OnlyOfficeResourceTest {
-	protected OnlyOfficeDocumentHandler testHandler = new OnlyOfficeDocumentHandler() {
+	protected static final OnlyOfficeDocumentHandler TEST_HANDLER = new OnlyOfficeDocumentHandler() {
 		@Override
 		public OnlyOfficeDocument load(String editGroup, String documentId) {
 			OnlyOfficeDocument doc = null;
@@ -68,34 +67,33 @@ public class OnlyOfficeResourceTest {
 		}
 	};
 
+	@BeforeAll
+	public static void setOnlyOfficeDocumentHandler() {
+		OnlyOfficeService.setOnlyOfficeDocumentHandlerForTesting(TEST_HANDLER);
+	}
+
 	protected WebTarget client() {
 		return Ivy.rest().client("OnlyOfficeCallback");
 	}
 
 	@Test
 	public void testLoadDocumentFound() throws IOException {
-		try (var ooService = mock()) {
-			var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "123"));
-			assertThat(rsp.getStatus()).isEqualTo(200);
-			var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
-			assertThat(content).isEqualTo("EditGroup:test,DocumentId:123");
-		}
+		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "123"));
+		assertThat(rsp.getStatus()).isEqualTo(200);
+		var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
+		assertThat(content).isEqualTo("EditGroup:test,DocumentId:123");
 	}
 
 	@Test
 	public void testLoadDocumentNotFoundEditGroup() {
-		try (var ooService = mock()) {
-			var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("foo", "123"));
-			assertThat(rsp.getStatus()).isEqualTo(404);
-		}
+		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("foo", "123"));
+		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
 	public void testLoadDocumentNotFoundDocumentId() {
-		try (var ooService = mock()) {
-			var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "124"));
-			assertThat(rsp.getStatus()).isEqualTo(404);
-		}
+		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "124"));
+		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
@@ -103,17 +101,15 @@ public class OnlyOfficeResourceTest {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
-		try (var ooService = mock()) {
-			var key = OnlyOfficeService.get().createDocumentKey("test", "123");
+		var key = OnlyOfficeService.get().createDocumentKey("test", "123");
 
-			var payload = JsonNodeFactory.instance.objectNode();
-			payload.put("status", "2");
-			payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
-			payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
+		var payload = JsonNodeFactory.instance.objectNode();
+		payload.put("status", "2");
+		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
+		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
-			var rsp = new OnlyOfficeResource().callback(null, payload);
-			assertThat(rsp.getStatus()).isEqualTo(200);
-		}
+		var rsp = new OnlyOfficeResource().callback(null, payload);
+		assertThat(rsp.getStatus()).isEqualTo(200);
 	}
 
 	@Test
@@ -121,27 +117,14 @@ public class OnlyOfficeResourceTest {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
-		try (var ooService = mock()) {
-			var key = OnlyOfficeService.get().createDocumentKey("test", "124");
+		var key = OnlyOfficeService.get().createDocumentKey("test", "124");
 
-			var payload = JsonNodeFactory.instance.objectNode();
-			payload.put("status", "2");
-			payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
-			payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
+		var payload = JsonNodeFactory.instance.objectNode();
+		payload.put("status", "2");
+		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
+		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
-			var rsp = new OnlyOfficeResource().callback(null, payload);
-			assertThat(rsp.getStatus()).isEqualTo(200);
-		}
+		var rsp = new OnlyOfficeResource().callback(null, payload);
+		assertThat(rsp.getStatus()).isEqualTo(200);
 	}
-
-	public MockedStatic<OnlyOfficeService> mock() {
-		var ooServiceSpy = Mockito.spy(OnlyOfficeService.class);
-
-		Mockito.doReturn(testHandler).when(ooServiceSpy).getOnlyOfficeDocumentHandler();
-
-		var ooService = Mockito.mockStatic(OnlyOfficeService.class);
-		ooService.when(OnlyOfficeService::get).thenReturn(ooServiceSpy);
-		return ooService;
-	}
-
 }
