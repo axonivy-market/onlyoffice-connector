@@ -9,10 +9,6 @@ import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.message.MessageFormatMessageFactory;
-
 /**
  * Currently, CSRF can only be switched on or off for the whole engine. This Provider implements
  * exceptions for state-changing (not GET) REST calls, so that they do not require the X-Requested-By header.
@@ -20,8 +16,6 @@ import org.apache.logging.log4j.message.MessageFormatMessageFactory;
 @Provider
 @PreMatching
 public class OnlyOfficeProvider implements ContainerRequestFilter {
-	private static final Logger LOG = LogManager.getLogger(new MessageFormatMessageFactory());
-
 	@Context
 	private HttpServletRequest servletRequest;
 

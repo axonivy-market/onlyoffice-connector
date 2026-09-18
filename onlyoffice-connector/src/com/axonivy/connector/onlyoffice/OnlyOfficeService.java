@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.crypto.SecretKey;
 import javax.faces.bean.ApplicationScoped;
@@ -44,7 +43,7 @@ public class OnlyOfficeService {
 	private static final OnlyOfficeService INSTANCE = new OnlyOfficeService();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final String VAR_TMPL = "com.axonivy.connector.onlyoffice.%s";
-	private static final UUID CLIENT_ID = UUID.fromString("37a13dba-9085-4c3b-a2bf-6694927b75de");
+	private static final String CLIENT_ID = "OnlyOffice";
 	private static final String ONLYOFFICE_DOCUMENT_PROVIDER_SUBPROCESS_SIGNATURE = "provideOnlyOfficeDocumentHandler()";
 	private static OnlyOfficeDocumentHandler onlyOfficeDocumentHandler = null;
 
