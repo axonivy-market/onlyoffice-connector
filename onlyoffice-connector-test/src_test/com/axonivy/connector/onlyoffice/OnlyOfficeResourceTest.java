@@ -98,9 +98,6 @@ public class OnlyOfficeResourceTest {
 		}
 	}
 
-
-	// TODO add negative callback test.
-
 	@Test
 	public void testCallback(AppFixture fix) {
 		var internalBaseUrl = client().getUri().toString();
