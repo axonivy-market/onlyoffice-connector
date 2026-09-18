@@ -1,0 +1,199 @@
+{
+  "$schema" : "https://json-schema.axonivy.com/process/12.0.0/process.json",
+  "id" : "19F42B1BE5D83040",
+  "kind" : "CALLABLE_SUB",
+  "config" : {
+    "data" : "com.axonivy.connector.onlyoffice.demo.OnlyOfficeDemoData"
+  },
+  "elements" : [ {
+      "id" : "f0",
+      "type" : "RequestStart",
+      "name" : "onlyOfficeDemo",
+      "config" : {
+        "signature" : "onlyOfficeDemo",
+        "request" : {
+          "name" : "ONLYOFFICE Demo"
+        },
+        "permission" : {
+          "role" : "Author"
+        }
+      },
+      "tags" : [
+        "demo"
+      ],
+      "visual" : {
+        "at" : { "x" : 96, "y" : 128 }
+      },
+      "connect" : [
+        { "id" : "f2", "to" : "f5" }
+      ]
+    }, {
+      "id" : "f1",
+      "type" : "TaskEnd",
+      "visual" : {
+        "at" : { "x" : 704, "y" : 128 },
+        "labelOffset" : { "x" : 13, "y" : 33 }
+      }
+    }, {
+      "id" : "f5",
+      "type" : "DialogCall",
+      "name" : "Document preparation",
+      "config" : {
+        "dialog" : "com.axonivy.connector.onlyoffice.demo.DocumentPreparation:start(String)",
+        "call" : {
+          "map" : {
+            "param.editGroup" : "java.util.UUID.randomUUID().toString()"
+          }
+        },
+        "output" : {
+          "map" : {
+            "out" : "in",
+            "out.documentId" : "result.document.uuid()",
+            "out.fileName" : "result.document.getName()"
+          }
+        }
+      },
+      "visual" : {
+        "at" : { "x" : 224, "y" : 128 }
+      },
+      "connect" : [
+        { "id" : "f6", "to" : "f7", "color" : "default", "var" : "in1" }
+      ]
+    }, {
+      "id" : "f7",
+      "type" : "TaskSwitchGateway",
+      "config" : {
+        "tasks" : [ {
+            "id" : "TaskA",
+            "name" : "Please rework document <%=in1.fileName%>",
+            "responsible" : {
+              "activator" : "Reviewer"
+            }
+          }, {
+            "id" : "TaskB",
+            "name" : "Please rework document <%=in1.fileName%>",
+            "responsible" : {
+              "activator" : "Compliance"
+            }
+          } ]
+      },
+      "visual" : {
+        "at" : { "x" : 352, "y" : 128 },
+        "labelOffset" : { "x" : 14, "y" : 34 }
+      },
+      "connect" : [
+        { "id" : "f8", "to" : "f9", "via" : [ { "x" : 392, "y" : 64 } ], "color" : "default", "condition" : "ivp==\"TaskA.ivp\"" },
+        { "id" : "f12", "to" : "f11", "via" : [ { "x" : 392, "y" : 192 } ], "condition" : "ivp==\"TaskB.ivp\"" }
+      ]
+    }, {
+      "id" : "f9",
+      "type" : "DialogCall",
+      "name" : "Document rework",
+      "config" : {
+        "dialog" : "com.axonivy.connector.onlyoffice.demo.DocumentRework:start(String,String)",
+        "call" : {
+          "map" : {
+            "param.editGroup" : "com.axonivy.connector.onlyoffice.demo.DemoService.get().getEditGroup(in.documentId)",
+            "param.documentId" : "in.documentId"
+          }
+        }
+      },
+      "visual" : {
+        "at" : { "x" : 480, "y" : 64 }
+      },
+      "connect" : [
+        { "id" : "f10", "to" : "f13", "via" : [ { "x" : 568, "y" : 64 } ], "color" : "default", "var" : "in1" }
+      ]
+    }, {
+      "id" : "f11",
+      "type" : "DialogCall",
+      "name" : "Document rework",
+      "config" : {
+        "dialog" : "com.axonivy.connector.onlyoffice.demo.DocumentRework:start(String,String)",
+        "call" : {
+          "map" : {
+            "param.editGroup" : "com.axonivy.connector.onlyoffice.demo.DemoService.get().getEditGroup(in.documentId)",
+            "param.documentId" : "in.documentId"
+          }
+        }
+      },
+      "visual" : {
+        "at" : { "x" : 480, "y" : 192 }
+      },
+      "connect" : [
+        { "id" : "f15", "to" : "f13", "via" : [ { "x" : 568, "y" : 192 } ], "var" : "in2" }
+      ]
+    }, {
+      "id" : "f13",
+      "type" : "TaskSwitchGateway",
+      "config" : {
+        "tasks" : [ {
+            "id" : "TaskA"
+          } ]
+      },
+      "visual" : {
+        "at" : { "x" : 608, "y" : 128 },
+        "labelOffset" : { "x" : 14, "y" : 34 }
+      },
+      "connect" : [
+        { "id" : "f14", "to" : "f1", "color" : "default", "condition" : "ivp==\"TaskA.ivp\"" }
+      ]
+    }, {
+      "id" : "f18",
+      "type" : "CallSubStart",
+      "name" : "provideOnlyOfficeDocumentHandler",
+      "config" : {
+        "signature" : "provideOnlyOfficeDocumentHandler",
+        "result" : {
+          "params" : [
+            { "name" : "onlyOfficeDocumentHandler", "type" : "com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeDocumentHandler", "desc" : "" }
+          ],
+          "map" : {
+            "result.onlyOfficeDocumentHandler" : "com.axonivy.connector.onlyoffice.demo.OnlyOfficeIvyDocumentHandlerWithEditGroup.get()"
+          },
+          "code" : "ivy.log.info(\"Provided document handler: {0}\", result.onlyOfficeDocumentHandler);"
+        }
+      },
+      "visual" : {
+        "at" : { "x" : 176, "y" : 384 },
+        "size" : { "width" : 26, "height" : 26 },
+        "labelOffset" : { "x" : 35 },
+        "color" : "optional"
+      },
+      "connect" : [
+        { "id" : "f20", "to" : "f21", "color" : "optional" }
+      ]
+    }, {
+      "id" : "f21",
+      "type" : "CallSubEnd",
+      "visual" : {
+        "at" : { "x" : 320, "y" : 384 },
+        "labelOffset" : { "x" : 13, "y" : 33 },
+        "color" : "optional"
+      }
+    }, {
+      "id" : "f16",
+      "type" : "ProcessAnnotation",
+      "name" : [
+        "Optional:",
+        "",
+        "A sub-process with this exact signature can be defined anywhere in the current application to provide your own document handler. ",
+        "If you do not define it, a default handler will be used, which loads and saves files from and to ivy documents.",
+        "",
+        "This example sets a specific handler, which clears the cached document edit group whenever the last editor leaves the document editor. Please see the demo section in our documentation for an explanation."
+      ],
+      "visual" : {
+        "at" : { "x" : 176, "y" : 272 },
+        "size" : { "width" : 304, "height" : 180 },
+        "color" : "optional"
+      },
+      "connect" : [
+        { "id" : "f17", "to" : "f18", "color" : "optional" }
+      ]
+    } ],
+  "layout" : {
+    "colors" : {
+      "optional" : "#0071c7"
+    }
+  }
+}
