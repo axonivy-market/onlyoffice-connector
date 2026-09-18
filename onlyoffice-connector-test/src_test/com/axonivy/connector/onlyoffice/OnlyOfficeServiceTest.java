@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ch.ivyteam.ivy.environment.AppFixture;
 import ch.ivyteam.ivy.environment.IvyTest;
 
 @IvyTest
@@ -46,6 +47,16 @@ class OnlyOfficeServiceTest {
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(new LinkedHashMap<>(), "key"));
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null, "key"));
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null, "key", "value"));
+	}
+
+	@Test
+	void testCrypting(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var org = "This is a test even with umlauts: \u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df";
+		var enc = OnlyOfficeService.get().encrypt(org);
+		assertThat(enc).isNotEqualTo(org);
+		var dec = OnlyOfficeService.get().decrypt(enc);
+		assertThat(dec).isEqualTo(org);
 	}
 
 	@Test

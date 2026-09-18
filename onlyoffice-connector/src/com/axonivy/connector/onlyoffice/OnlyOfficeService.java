@@ -1,6 +1,9 @@
 package com.axonivy.connector.onlyoffice;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -9,7 +12,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.faces.bean.ApplicationScoped;
 import javax.faces.bean.ManagedBean;
 import javax.ws.rs.client.Entity;
@@ -32,7 +40,6 @@ import ch.ivyteam.ivy.process.call.SubProcessCallStart;
 import ch.ivyteam.ivy.process.call.SubProcessSearchFilter;
 import ch.ivyteam.ivy.process.call.SubProcessSearchFilter.SearchScope;
 import ch.ivyteam.ivy.security.exec.Sudo;
-import ch.ivyteam.util.crypto.CryptoUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -109,6 +116,11 @@ public class OnlyOfficeService {
 		return getVar("jwtsecret");
 	}
 
+	public byte[] onlyOfficeJwtsecretBytes() {
+		var secret = onlyOfficeJwtsecret();
+		return secret.getBytes(StandardCharsets.UTF_8);
+	}
+
 	public String getVar(String name) {
 		return Ivy.var().get(VAR_TMPL.formatted(name));
 	}
@@ -141,9 +153,54 @@ public class OnlyOfficeService {
 				.toString();
 	}
 
+	protected SecretKey cryptoKey() {
+		try {
+			// Create a hash with 32 bytes length to use as the key
+			// (just in case the secret should ever get smaller than 32 bytes)
+			var hash = MessageDigest.getInstance("SHA-256").digest(onlyOfficeJwtsecretBytes());
+			return new SecretKeySpec(hash, 0, 32, "AES");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Error while creating key hash.", e);
+		}
+	}
+
+	/**
+	 * Encrypt text URL safe re-using the already defined secret used also for JWT.
+	 *
+	 * @param text
+	 * @return
+	 */
+	public String encrypt(String text) {
+		try {
+			var cipher = Cipher.getInstance("AES");
+			cipher.init(Cipher.ENCRYPT_MODE, cryptoKey());
+			byte[] encryptedBytes = cipher.doFinal(text.getBytes());
+			return Base64.getUrlEncoder().withoutPadding().encodeToString(encryptedBytes);
+		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new RuntimeException("Error while encrypting.", e);
+		}
+	}
+
+	/**
+	 * Encrypt URL safe text re-using the already defined secret used also for JWT.
+	 *
+	 * @param encrypted
+	 * @return
+	 */
+	public String decrypt(String encrypted) {
+		try {
+			var cipher = Cipher.getInstance("AES");
+			cipher.init(Cipher.DECRYPT_MODE, cryptoKey());
+			byte[] decodedBytes = Base64.getUrlDecoder().decode(encrypted);
+			byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+			return new String(decryptedBytes);
+		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new RuntimeException("Error while decrypting.", e);
+		}
+	}
+
 	public String createToken(Map<String, Object> config) {
-		var secret = onlyOfficeJwtsecret();
-		SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+		var key = Keys.hmacShaKeyFor(onlyOfficeJwtsecretBytes());
 
 		return Jwts.builder()
 				.setClaims(config)
@@ -176,9 +233,7 @@ public class OnlyOfficeService {
 	public String createDocumentKey(String editGroup, String documentId) {
 		try {
 			var key = MAPPER.writeValueAsString(DocumentEditId.create(editGroup, documentId).toList());
-			var enc = CryptoUtil.encrypt(key);
-			var bin = Base64.getDecoder().decode(enc);
-			return Base64.getUrlEncoder().withoutPadding().encodeToString(bin);
+			return encrypt(key);
 		} catch (Exception e) {
 			throw new RuntimeException("Could not create key for editGroup: '%s' documentId: '%s'".formatted(editGroup, documentId), e);
 		}
@@ -192,9 +247,7 @@ public class OnlyOfficeService {
 	 */
 	public DocumentEditId extractDocumentEditId(String documentKey) {
 		try {
-			var bin = Base64.getUrlDecoder().decode(documentKey);
-			var enc = Base64.getEncoder().encodeToString(bin);
-			var packed = CryptoUtil.decrypt(enc);
+			var packed = decrypt(documentKey);
 			return DocumentEditId.fromList(MAPPER.readValue(packed, new TypeReference<List<String>>() {}));
 		} catch (Exception e) {
 			throw new RuntimeException("Could not extract from '%s'".formatted(documentKey), e);
