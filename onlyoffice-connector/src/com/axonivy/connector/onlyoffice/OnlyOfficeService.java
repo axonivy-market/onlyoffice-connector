@@ -141,8 +141,14 @@ public class OnlyOfficeService {
 		return UriBuilder.fromUri(base).path("web-apps/apps/api/documents/api.js").build().toString();
 	}
 
-	public String toInternalUrl(String url) {
-		var intBase= UriBuilder
+	/**
+	 * Replace schema, host and port with internal values.
+	 *
+	 * @param url
+	 * @return
+	 */
+	public String toInternalHost(String url) {
+		var intBase = UriBuilder
 				.fromUri(documentServerInternalBaseUrl())
 				.build((Object[])null);
 		return UriBuilder

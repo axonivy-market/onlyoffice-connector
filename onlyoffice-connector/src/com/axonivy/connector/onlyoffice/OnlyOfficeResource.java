@@ -75,13 +75,18 @@ public class OnlyOfficeResource {
 
 		if(urlNode != null) {
 			var url = urlNode.asText();
-			var intUrl = OnlyOfficeService.get().toInternalUrl(url);
+			var intUrl = OnlyOfficeService.get().toInternalHost(url);
 			Ivy.log().debug("Converted URL to internal: original: {0} internal: {1}", url, intUrl);
 
 			var client = OnlyOfficeService.get().absolute(intUrl);
 
 			var rsp = client.request().get();
+
 			var stream = rsp.readEntity(InputStream.class);
+
+			if(rsp.getStatus() != 200) {
+				Ivy.log().error("The document server did not find the document for editGroup ''{0}'' and documentId ''{1}'' and returned with status: {2}.", dei.editGroup(), dei.documentId(), rsp.getStatus());
+			}
 
 			doc = OnlyOfficeDocument.builder().editGroup(dei.editGroup()).documentId(dei.documentId()).stream(stream).build();
 		}
