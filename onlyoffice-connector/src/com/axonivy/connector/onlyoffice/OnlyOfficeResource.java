@@ -80,7 +80,8 @@ public class OnlyOfficeResource {
 
 			var client = OnlyOfficeService.get().absolute(intUrl);
 
-			var stream = client.request().get().readEntity(InputStream.class);
+			var rsp = client.request().get();
+			var stream = rsp.readEntity(InputStream.class);
 
 			doc = OnlyOfficeDocument.builder().editGroup(dei.editGroup()).documentId(dei.documentId()).stream(stream).build();
 		}
