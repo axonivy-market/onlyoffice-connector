@@ -73,7 +73,7 @@ public class OnlyOfficeResourceTest {
 	}
 
 	protected WebTarget client() {
-		return Ivy.rest().client("OnlyOfficeCallback");
+		return Ivy.rest().client("OnlyOfficeTestCallback");
 	}
 
 	@Test
