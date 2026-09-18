@@ -23,8 +23,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeIvyDocumentHandler;
 import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeDocumentHandler;
+import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeIvyDocumentHandler;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -72,7 +72,6 @@ public class OnlyOfficeService {
 				}
 				else {
 					var subProcessStart = subProcessStartList.getFirst();
-
 					handler = subProcessStart.call().first();
 				}
 
