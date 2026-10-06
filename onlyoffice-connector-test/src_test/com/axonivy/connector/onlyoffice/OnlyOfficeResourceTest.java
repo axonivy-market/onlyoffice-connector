@@ -127,7 +127,7 @@ public class OnlyOfficeResourceTest {
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
 		var rsp = new OnlyOfficeResource().callback(null, null, payload);
-		assertThat(rsp.getStatus()).isEqualTo(200);
+		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 
@@ -240,6 +240,6 @@ public class OnlyOfficeResourceTest {
 								"url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString()))),
 				payload);
 
-		assertThat(rsp.getStatus()).isEqualTo(200);
+		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 }

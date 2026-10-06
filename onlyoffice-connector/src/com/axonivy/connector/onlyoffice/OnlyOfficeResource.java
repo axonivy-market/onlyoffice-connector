@@ -121,12 +121,12 @@ public class OnlyOfficeResource {
 
 			var rsp = client.request().get();
 
-			var stream = rsp.readEntity(InputStream.class);
-
 			if(rsp.getStatus() != 200) {
-				Ivy.log().error("The document server did not find the document for editGroup ''{0}'' and documentId ''{1}'' and returned with status: {2}.", dei.editGroup(), dei.documentId(), rsp.getStatus());
+				Ivy.log().error("The document server could not load the document for editGroup ''{0}'' and documentId ''{1}'' and returned with status: {2}.", dei.editGroup(), dei.documentId(), rsp.getStatus());
+				return Response.status(rsp.getStatus()).entity(OnlyOfficeResult.ERROR).build();
 			}
 
+			var stream = rsp.readEntity(InputStream.class);
 			doc = OnlyOfficeDocument.builder().editGroup(dei.editGroup()).documentId(dei.documentId()).stream(stream).build();
 			OnlyOfficeService.get().getOnlyOfficeDocumentHandler().callback(doc, status);
 		}
