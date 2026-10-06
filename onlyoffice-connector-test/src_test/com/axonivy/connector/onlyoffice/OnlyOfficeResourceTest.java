@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import javax.ws.rs.client.WebTarget;
 
@@ -20,6 +21,7 @@ import ch.ivyteam.ivy.environment.IvyTest;
 
 @IvyTest(enableWebServer = true)
 public class OnlyOfficeResourceTest {
+	private static final String TEST_SECRET = "AtLeast32BytesOfSecret0123456789";
 	protected static final OnlyOfficeDocumentHandler TEST_HANDLER = new OnlyOfficeDocumentHandler() {
 		@Override
 		public OnlyOfficeDocument load(String editGroup, String documentId) {
@@ -77,27 +79,27 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentFound() throws IOException {
-		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "123"));
+	public void testLoadDocumentFoundUnsigned() throws IOException {
+		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("test", "123"));
 		assertThat(rsp.getStatus()).isEqualTo(200);
 		var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
 		assertThat(content).isEqualTo("EditGroup:test,DocumentId:123");
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundEditGroup() {
-		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("foo", "123"));
+	public void testLoadDocumentNotFoundEditGroupUnsigned() {
+		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("foo", "123"));
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundDocumentId() {
-		var rsp = new OnlyOfficeResource().loadDocument(null, OnlyOfficeService.get().createDocumentKey("test", "124"));
+	public void testLoadDocumentNotFoundDocumentIdUnsigned() {
+		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("test", "124"));
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testCallback(AppFixture fix) {
+	public void testCallbackUnsigned(AppFixture fix) {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
@@ -108,12 +110,12 @@ public class OnlyOfficeResourceTest {
 		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
-		var rsp = new OnlyOfficeResource().callback(null, payload);
+		var rsp = new OnlyOfficeResource().callback(null, null, payload);
 		assertThat(rsp.getStatus()).isEqualTo(200);
 	}
 
 	@Test
-	public void testCallbackWrongKey(AppFixture fix) {
+	public void testCallbackWrongKeyUnsigned(AppFixture fix) {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
@@ -124,7 +126,120 @@ public class OnlyOfficeResourceTest {
 		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
-		var rsp = new OnlyOfficeResource().callback(null, payload);
+		var rsp = new OnlyOfficeResource().callback(null, null, payload);
+		assertThat(rsp.getStatus()).isEqualTo(200);
+	}
+
+
+	protected String createBearerToken(Map<String, Object> claims) {
+		return "Bearer %s".formatted(OnlyOfficeService.get().createToken(claims));
+	}
+
+	@Test
+	public void testLoadDocumentFound(AppFixture fix) throws IOException {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(
+				null,
+				createBearerToken(Map.of(
+						"payload",	Map.of(
+								"url", "https://someurl/bla/%s?dummy=123".formatted(OnlyOfficeService.get().createDocumentKey("test", "123"))))),
+				OnlyOfficeService.get().createDocumentKey("test", "123"));
+
+		assertThat(rsp.getStatus()).isEqualTo(200);
+		var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
+		assertThat(content).isEqualTo("EditGroup:test,DocumentId:123");
+	}
+
+	@Test
+	public void testLoadDocumentWrongSigned(AppFixture fix) throws IOException {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(
+				null,
+				createBearerToken(Map.of(
+						"payload", Map.of(
+								"url", "https://someurl/bla?dummy=123"))),
+				OnlyOfficeService.get().createDocumentKey("test", "123"));
+
+		assertThat(rsp.getStatus()).isEqualTo(400);
+	}
+
+	@Test
+	public void testLoadDocumentNotFoundEditGroup(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(
+				null,
+				createBearerToken(Map.of(
+						"payload", Map.of(
+								"url", "https://someurl/bla/%s".formatted(OnlyOfficeService.get().createDocumentKey("foo", "123"))))),
+				OnlyOfficeService.get().createDocumentKey("foo", "123"));
+
+		assertThat(rsp.getStatus()).isEqualTo(404);
+	}
+
+	@Test
+	public void testLoadDocumentNotFoundDocumentId(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(
+				null,
+				createBearerToken(Map.of(
+						"payload", Map.of(
+								"url", "https://someurl/bla/%s".formatted(OnlyOfficeService.get().createDocumentKey("test", "124"))))),
+				OnlyOfficeService.get().createDocumentKey("test", "124"));
+
+		assertThat(rsp.getStatus()).isEqualTo(404);
+	}
+
+	@Test
+	public void testCallback(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+		var internalBaseUrl = client().getUri().toString();
+		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
+
+		var key = OnlyOfficeService.get().createDocumentKey("test", "123");
+
+		var payload = JsonNodeFactory.instance.objectNode();
+		payload.put("status", "2");
+		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
+		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
+
+		var rsp = new OnlyOfficeResource().callback(
+				null,
+				createBearerToken(Map.of(
+						"payload", Map.of(
+								"status", "2",
+								"key", OnlyOfficeService.get().createDocumentKey("test", "123"),
+								"url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString()))),
+				payload);
+
+		assertThat(rsp.getStatus()).isEqualTo(200);
+	}
+
+	@Test
+	public void testCallbackWrongKey(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+		var internalBaseUrl = client().getUri().toString();
+		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
+
+		var key = OnlyOfficeService.get().createDocumentKey("test", "124");
+
+		var payload = JsonNodeFactory.instance.objectNode();
+		payload.put("status", "2");
+		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
+		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
+
+		var rsp = new OnlyOfficeResource().callback(
+				null,
+				createBearerToken(Map.of(
+						"payload", Map.of(
+								"status", "2",
+								"key", OnlyOfficeService.get().createDocumentKey("test", "124"),
+								"url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString()))),
+				payload);
+
 		assertThat(rsp.getStatus()).isEqualTo(200);
 	}
 }

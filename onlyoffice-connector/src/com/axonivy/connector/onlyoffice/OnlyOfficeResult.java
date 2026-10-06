@@ -4,6 +4,7 @@ public class OnlyOfficeResult {
 	private int error = 0;
 
 	public static final OnlyOfficeResult OK = OnlyOfficeResult.create(0);
+	public static final OnlyOfficeResult ERROR = OnlyOfficeResult.create(1);
 
 	public static OnlyOfficeResult create(int error) {
 		var result = new OnlyOfficeResult();

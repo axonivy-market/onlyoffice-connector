@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeDocumentHandler;
 import com.axonivy.connector.onlyoffice.documenthandler.OnlyOfficeIvyDocumentHandler;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.ivyteam.ivy.environment.Ivy;
@@ -40,6 +41,7 @@ import ch.ivyteam.ivy.process.call.SubProcessCallStart;
 import ch.ivyteam.ivy.process.call.SubProcessSearchFilter;
 import ch.ivyteam.ivy.process.call.SubProcessSearchFilter.SearchScope;
 import ch.ivyteam.ivy.security.exec.Sudo;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -119,6 +121,10 @@ public class OnlyOfficeService {
 	public byte[] onlyOfficeJwtsecretBytes() {
 		var secret = onlyOfficeJwtsecret();
 		return secret.getBytes(StandardCharsets.UTF_8);
+	}
+
+	public boolean hasOnlyOfficeJwtSecret() {
+		return StringUtils.isNotBlank(onlyOfficeJwtsecret());
 	}
 
 	public String getVar(String name) {
@@ -214,6 +220,24 @@ public class OnlyOfficeService {
 				.setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000)) // 1h
 				.signWith(key, SignatureAlgorithm.HS256)
 				.compact();
+	}
+
+	public Claims extractClaims(String token) {
+		var key = Keys.hmacShaKeyFor(onlyOfficeJwtsecretBytes());
+
+		var claims = Jwts.parserBuilder()
+				.setSigningKey(key)
+				.build()
+				.parseClaimsJws(token)
+				.getBody();
+
+		return claims;
+	}
+
+	public JsonNode extractClaimsPayload(String token) {
+		var claims = extractClaims(token);
+
+		return MAPPER.valueToTree(claims).get("payload");
 	}
 
 	public static record DocumentEditId(String editGroup, String documentId) {
