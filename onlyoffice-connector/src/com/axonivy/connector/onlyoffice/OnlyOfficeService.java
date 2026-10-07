@@ -361,13 +361,27 @@ public class OnlyOfficeService {
 			putIfAbsent(map, "editorConfig", "user", "name", ivyUser.getDisplayName());
 			putIfAbsent(map, "token", createToken(map));
 
-			result = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(map);
+			result = escapeForScript(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(map));
 		} catch (Exception e) {
 			Ivy.log().error("An error occurred while creating an ONLYOFFICE configuration for editGroup: ''{0}'' documentId: ''{1}'' fileName: ''{2}'' configuration: ''{3}''",
 					e, editGroup, documentId, fileName, configuration);
-			result = e.getMessage();
+			result = "{}";
 		}
 		return result;
+	}
+
+	/**
+	 * Escape characters in serialized JSON, which could break out of an inline script block.
+	 * Those characters can only occur inside JSON strings, so the result stays valid JSON (and JavaScript).
+	 */
+	static String escapeForScript(String json) {
+		return json
+				.replace("<", "\\u003c")
+				.replace(">", "\\u003e")
+				.replace("&", "\\u0026")
+				.replace("'", "\\u0027")
+				.replace("\u2028", "\\u2028")
+				.replace("\u2029", "\\u2029");
 	}
 
 	/**

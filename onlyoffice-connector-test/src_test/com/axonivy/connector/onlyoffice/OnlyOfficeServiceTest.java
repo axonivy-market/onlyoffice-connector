@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -77,6 +78,26 @@ class OnlyOfficeServiceTest {
 		var tampered = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
 		assertThrows(RuntimeException.class, () -> service.decrypt(tampered));
 		assertThrows(RuntimeException.class, () -> service.decrypt("short"));
+	}
+
+	@Test
+	void escapeForScript_withScriptBreakingCharacters_escapesThemAndKeepsJsonValid() throws JsonProcessingException {
+		var title = "</script><img src=x onerror=alert(1)>&'\u2028\u2029.docx";
+		var json = MAPPER.writeValueAsString(Map.of("document", Map.of("title", title)));
+
+		var escaped = OnlyOfficeService.escapeForScript(json);
+
+		assertThat(escaped).doesNotContain("<", ">", "&", "'", "\u2028", "\u2029");
+		assertThat(MAPPER.readTree(escaped).at("/document/title").asText()).isEqualTo(title);
+	}
+
+	@Test
+	void putIfAbsentAndSign_withError_returnsEmptyObjectInsteadOfErrorMessage(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+
+		var result = service.putIfAbsentAndSign("group", "doc", "file.docx", "</script>{not json");
+
+		assertThat(result).isEqualTo("{}");
 	}
 
 	@Test
