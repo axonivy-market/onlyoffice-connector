@@ -21,7 +21,7 @@ class OnlyOfficeServiceTest {
 
 
 	@Test
-	void createDocumentKey_andExtractDocumentEditId_roundTrip() {
+	void extractDocumentEditId_withCreatedKey_returnsEditGroupAndDocumentId() {
 		var documentId = "doc-123";
 		var editGroup = "group-a";
 
@@ -41,7 +41,7 @@ class OnlyOfficeServiceTest {
 	}
 
 	@Test
-	void putIfAbsent_withInvalidParameters() {
+	void putIfAbsent_withInvalidParameters_throwsException() {
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null));
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(new LinkedHashMap<>()));
 		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(new LinkedHashMap<>(), "key"));
@@ -50,7 +50,7 @@ class OnlyOfficeServiceTest {
 	}
 
 	@Test
-	void testCrypting(AppFixture fix) {
+	void encryptDecrypt_withUmlauts_roundTrip(AppFixture fix) {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
 		var org = "This is a test even with umlauts: \u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df";
 		var enc = OnlyOfficeService.get().encrypt(org);
@@ -60,7 +60,27 @@ class OnlyOfficeServiceTest {
 	}
 
 	@Test
-	void putIfAbsent_withValidParameters() throws JsonProcessingException {
+	void encrypt_withSameInput_producesDifferentCiphertext(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var enc1 = service.encrypt("same input");
+		var enc2 = service.encrypt("same input");
+		assertThat(enc1).isNotEqualTo(enc2);
+		assertThat(service.decrypt(enc1)).isEqualTo("same input");
+		assertThat(service.decrypt(enc2)).isEqualTo("same input");
+	}
+
+	@Test
+	void decrypt_withTamperedInput_throwsException(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var bytes = java.util.Base64.getUrlDecoder().decode(service.encrypt("secret content"));
+		bytes[bytes.length - 1] ^= 1;
+		var tampered = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+		assertThrows(RuntimeException.class, () -> service.decrypt(tampered));
+		assertThrows(RuntimeException.class, () -> service.decrypt("short"));
+	}
+
+	@Test
+	void putIfAbsent_withValidParameters_buildsNestedMap() throws JsonProcessingException {
 		var map = new LinkedHashMap<String, Object>();
 
 		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo("{}");

@@ -56,7 +56,7 @@ public class OnlyOfficeResourceTest {
 			String content = null;
 			try {
 				content = new String(document.getStream().readAllBytes());
-				if(is123 && !"Content:%s".formatted(OnlyOfficeService.get().createDocumentKey("test", "123")).equals(content)) {
+				if(is123 && !isContentOfKey(content, "test", "123")) {
 					throw new RuntimeException("Received wrong content '%s'.".formatted(content));
 				}
 				else if(is124 && !"".equals(content)) {
@@ -69,6 +69,15 @@ public class OnlyOfficeResourceTest {
 		}
 	};
 
+	private static boolean isContentOfKey(String content, String editGroup, String documentId) {
+		var prefix = "Content:";
+		if(!content.startsWith(prefix)) {
+			return false;
+		}
+		var dei = OnlyOfficeService.get().extractDocumentEditId(content.substring(prefix.length()));
+		return editGroup.equals(dei.editGroup()) && documentId.equals(dei.documentId());
+	}
+
 	@BeforeAll
 	public static void setOnlyOfficeDocumentHandler() {
 		OnlyOfficeService.setOnlyOfficeDocumentHandlerForTesting(TEST_HANDLER);
@@ -79,7 +88,7 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentFoundUnsigned() throws IOException {
+	public void loadDocument_withoutSignature_returnsDocument() throws IOException {
 		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("test", "123"));
 		assertThat(rsp.getStatus()).isEqualTo(200);
 		var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
@@ -87,19 +96,19 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundEditGroupUnsigned() {
+	public void loadDocument_withoutSignatureAndUnknownEditGroup_returnsNotFound() {
 		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("foo", "123"));
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundDocumentIdUnsigned() {
+	public void loadDocument_withoutSignatureAndUnknownDocumentId_returnsNotFound() {
 		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("test", "124"));
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testCallbackUnsigned(AppFixture fix) {
+	public void callback_withoutSignature_returnsOk(AppFixture fix) {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
@@ -107,7 +116,7 @@ public class OnlyOfficeResourceTest {
 
 		var payload = JsonNodeFactory.instance.objectNode();
 		payload.put("status", "2");
-		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
+		payload.put("key", key);
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
 		var rsp = new OnlyOfficeResource().callback(null, null, payload);
@@ -115,7 +124,7 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testCallbackWrongKeyUnsigned(AppFixture fix) {
+	public void callback_withoutSignatureAndUnknownDocumentKey_returnsNotFound(AppFixture fix) {
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
 
@@ -123,7 +132,7 @@ public class OnlyOfficeResourceTest {
 
 		var payload = JsonNodeFactory.instance.objectNode();
 		payload.put("status", "2");
-		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
+		payload.put("key", key);
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
 		var rsp = new OnlyOfficeResource().callback(null, null, payload);
@@ -136,15 +145,16 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentFound(AppFixture fix) throws IOException {
+	public void loadDocument_withValidSignature_returnsDocument(AppFixture fix) throws IOException {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+		var key = OnlyOfficeService.get().createDocumentKey("test", "123");
 
 		var rsp = new OnlyOfficeResource().loadDocument(
 				null,
 				createBearerToken(Map.of(
 						"payload",	Map.of(
-								"url", "https://someurl/bla/%s?dummy=123".formatted(OnlyOfficeService.get().createDocumentKey("test", "123"))))),
-				OnlyOfficeService.get().createDocumentKey("test", "123"));
+								"url", "https://someurl/bla/%s?dummy=123".formatted(key)))),
+				key);
 
 		assertThat(rsp.getStatus()).isEqualTo(200);
 		var content = new String(((InputStream)rsp.getEntity()).readAllBytes());
@@ -152,7 +162,7 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentWrongSigned(AppFixture fix) throws IOException {
+	public void loadDocument_withMismatchingSignedUrl_returnsBadRequest(AppFixture fix) throws IOException {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
 
 		var rsp = new OnlyOfficeResource().loadDocument(
@@ -166,35 +176,37 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundEditGroup(AppFixture fix) {
+	public void loadDocument_withValidSignatureAndUnknownEditGroup_returnsNotFound(AppFixture fix) {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+		var key = OnlyOfficeService.get().createDocumentKey("foo", "123");
 
 		var rsp = new OnlyOfficeResource().loadDocument(
 				null,
 				createBearerToken(Map.of(
 						"payload", Map.of(
-								"url", "https://someurl/bla/%s".formatted(OnlyOfficeService.get().createDocumentKey("foo", "123"))))),
-				OnlyOfficeService.get().createDocumentKey("foo", "123"));
+								"url", "https://someurl/bla/%s".formatted(key)))),
+				key);
 
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testLoadDocumentNotFoundDocumentId(AppFixture fix) {
+	public void loadDocument_withValidSignatureAndUnknownDocumentId_returnsNotFound(AppFixture fix) {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+		var key = OnlyOfficeService.get().createDocumentKey("test", "124");
 
 		var rsp = new OnlyOfficeResource().loadDocument(
 				null,
 				createBearerToken(Map.of(
 						"payload", Map.of(
-								"url", "https://someurl/bla/%s".formatted(OnlyOfficeService.get().createDocumentKey("test", "124"))))),
-				OnlyOfficeService.get().createDocumentKey("test", "124"));
+								"url", "https://someurl/bla/%s".formatted(key)))),
+				key);
 
 		assertThat(rsp.getStatus()).isEqualTo(404);
 	}
 
 	@Test
-	public void testCallback(AppFixture fix) {
+	public void callback_withValidSignature_returnsOk(AppFixture fix) {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
@@ -203,7 +215,7 @@ public class OnlyOfficeResourceTest {
 
 		var payload = JsonNodeFactory.instance.objectNode();
 		payload.put("status", "2");
-		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "123"));
+		payload.put("key", key);
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
 		var rsp = new OnlyOfficeResource().callback(
@@ -211,7 +223,7 @@ public class OnlyOfficeResourceTest {
 				createBearerToken(Map.of(
 						"payload", Map.of(
 								"status", "2",
-								"key", OnlyOfficeService.get().createDocumentKey("test", "123"),
+								"key", key,
 								"url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString()))),
 				payload);
 
@@ -219,7 +231,7 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
-	public void testCallbackWrongKey(AppFixture fix) {
+	public void callback_withValidSignatureAndUnknownDocumentKey_returnsNotFound(AppFixture fix) {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
 		var internalBaseUrl = client().getUri().toString();
 		fix.var("com.axonivy.connector.onlyoffice.documentServerInternalBaseUrl", internalBaseUrl);
@@ -228,7 +240,7 @@ public class OnlyOfficeResourceTest {
 
 		var payload = JsonNodeFactory.instance.objectNode();
 		payload.put("status", "2");
-		payload.put("key", OnlyOfficeService.get().createDocumentKey("test", "124"));
+		payload.put("key", key);
 		payload.put("url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString());
 
 		var rsp = new OnlyOfficeResource().callback(
@@ -236,7 +248,7 @@ public class OnlyOfficeResourceTest {
 				createBearerToken(Map.of(
 						"payload", Map.of(
 								"status", "2",
-								"key", OnlyOfficeService.get().createDocumentKey("test", "124"),
+								"key", key,
 								"url", client().path("test/document/{random}").resolveTemplate("random", key).getUri().toString()))),
 				payload);
 

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class OnlyOfficeDocumentTest {
 
 	@Test
-	void build_usesFileNameAsDocumentIdWhenDocumentIdIsMissing() {
+	void build_withMissingDocumentId_usesFileNameAsDocumentId() {
 		var doc = OnlyOfficeDocument.builder()
 				.editGroup("group-1")
 				.fileName("report.pdf")
@@ -25,7 +25,7 @@ class OnlyOfficeDocumentTest {
 	}
 
 	@Test
-	void build_keepsExplicitDocumentId() {
+	void build_withExplicitDocumentId_keepsDocumentId() {
 		var doc = OnlyOfficeDocument.builder()
 				.editGroup("group-1")
 				.documentId("doc-123")
@@ -42,7 +42,7 @@ class OnlyOfficeDocumentTest {
 	}
 
 	@Test
-	void build_allowsNullStream() {
+	void build_withNullStream_buildsDocument() {
 		var doc = OnlyOfficeDocument.builder()
 				.editGroup("group-1")
 				.documentId("doc-123")
