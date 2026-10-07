@@ -50,7 +50,7 @@ public class OnlyOfficeResource {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response loadDocument(@Context HttpServletRequest rq, @HeaderParam("authorization") String authorization, @PathParam("key") String key) {
 
-		// If secret is set, then check, that key equals the last part of the url insider the jwt payload.
+		// If secret is set, then check that the key equals the last part of the URL inside the JWT payload.
 		JsonNode payload = null;
 		if(OnlyOfficeService.get().hasOnlyOfficeJwtSecret()) {
 			String payloadKey = null;
