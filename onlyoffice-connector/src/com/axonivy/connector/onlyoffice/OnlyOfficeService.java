@@ -222,6 +222,12 @@ public class OnlyOfficeService {
 		}
 	}
 
+	/**
+	 * Create a token containing the given key/value config.
+	 *
+	 * @param config
+	 * @return
+	 */
 	public String createToken(Map<String, Object> config) {
 		var key = Keys.hmacShaKeyFor(onlyOfficeJwtsecretBytes());
 
@@ -233,6 +239,12 @@ public class OnlyOfficeService {
 				.compact();
 	}
 
+	/**
+	 * Extract claims of a token.
+	 *
+	 * @param token
+	 * @return
+	 */
 	public Claims extractClaims(String token) {
 		var key = Keys.hmacShaKeyFor(onlyOfficeJwtsecretBytes());
 
@@ -245,10 +257,17 @@ public class OnlyOfficeService {
 		return claims;
 	}
 
+	/**
+	 * Extract the payload whether it is stored top-level or inside a payload node.
+	 *
+	 * @param token
+	 * @return
+	 */
 	public JsonNode extractClaimsPayload(String token) {
 		var claims = extractClaims(token);
 
-		return MAPPER.valueToTree(claims).get("payload");
+		var node = MAPPER.valueToTree(claims);
+		return node.has("payload") ? node.get("payload") : node;
 	}
 
 	public static record DocumentEditId(String editGroup, String documentId) {
