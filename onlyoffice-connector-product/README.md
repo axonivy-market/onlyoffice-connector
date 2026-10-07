@@ -71,7 +71,7 @@ Once the document is opened, the user can edit it directly in the integrated edi
 
 ![Rework tasks](images/03_rework_tasks.png)
 
-After the author completes the initial editing step, the document is handed over to the next participants. A reviewer and a compliance representative each receive the relevant task and continue the same workflow on the same document. Note, that the document is saved asynchornously in the previous step and might take a few seconds. Please wait a few seconds before starting the tasks.
+After the author completes the initial editing step, the document is handed over to the next participants. A reviewer and a compliance representative each receive the relevant task and continue the same workflow on the same document. Note: In the previous step, the document is saved asynchronously and might take a few seconds. Please wait a few seconds before starting the tasks.
 
 ![Concurrent editing](images/04_concurrent_editing.png)
 
