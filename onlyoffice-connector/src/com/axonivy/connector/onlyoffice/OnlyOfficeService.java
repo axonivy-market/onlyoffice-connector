@@ -382,8 +382,8 @@ public class OnlyOfficeService {
 
 			result = escapeForScript(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(map));
 		} catch (Exception e) {
-			Ivy.log().error("An error occurred while creating an ONLYOFFICE configuration for editGroup: ''{0}'' documentId: ''{1}'' fileName: ''{2}'' configuration: ''{3}''",
-					e, editGroup, documentId, fileName, configuration);
+			Ivy.log().error("An error occurred while creating an ONLYOFFICE configuration for editGroup: ''{0}'' documentId: ''{1}'' fileName: ''{2}''",
+					e, editGroup, documentId, fileName);
 			result = "{}";
 		}
 		return result;
