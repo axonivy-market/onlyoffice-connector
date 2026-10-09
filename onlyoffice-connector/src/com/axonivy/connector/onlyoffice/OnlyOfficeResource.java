@@ -55,7 +55,7 @@ public class OnlyOfficeResource {
 		if(OnlyOfficeService.get().hasOnlyOfficeJwtSecret()) {
 			String payloadKey = null;
 			payload = extractJwtPayload(authorization);
-			var url = payload.get("url").asText();
+			var url = payload != null && payload.hasNonNull("url") ? payload.get("url").asText() : null;
 			if(url != null) {
 				try {
 					var uri = new URI(url);
@@ -101,8 +101,8 @@ public class OnlyOfficeResource {
 			payload = extractJwtPayload(authorization);
 		}
 
-		var status = payload != null ? payload.get("status").asInt() : 0;
-		var key = payload != null ? payload.get("key").asText() : null;
+		var status = payload != null && payload.hasNonNull("status") ? payload.get("status").asInt() : 0;
+		var key = payload != null && payload.hasNonNull("key") ? payload.get("key").asText() : null;
 		var dei = key != null ? OnlyOfficeService.get().extractDocumentEditId(key) : null;
 		var urlNode = payload != null ? payload.get("url") : null;
 		OnlyOfficeDocument doc = null;
@@ -144,7 +144,7 @@ public class OnlyOfficeResource {
 			try {
 				payload = OnlyOfficeService.get().extractClaimsPayload(jwt);
 			} catch (Exception e) {
-				Ivy.log().error("Could not extract payload from authorization header: ''{0}''", e, authorization);
+				Ivy.log().error("Could not extract payload from authorization header.", e);
 			}
 		}
 

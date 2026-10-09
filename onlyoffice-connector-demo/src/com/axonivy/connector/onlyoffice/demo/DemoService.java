@@ -38,7 +38,7 @@ public class DemoService {
 	}
 
 	/**
-	 * Load the edit group from application cache.
+	 * Clear the edit group from application cache.
 	 *
 	 * @param documentId
 	 */

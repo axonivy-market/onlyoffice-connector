@@ -145,6 +145,45 @@ public class OnlyOfficeResourceTest {
 	}
 
 	@Test
+	public void loadDocument_withSecretAndMissingAuthorization_returnsBadRequest(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(null, null, OnlyOfficeService.get().createDocumentKey("test", "123"));
+
+		assertThat(rsp.getStatus()).isEqualTo(400);
+	}
+
+	@Test
+	public void loadDocument_withSignatureWithoutUrl_returnsBadRequest(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().loadDocument(
+				null,
+				createBearerToken(Map.of("payload", Map.of("other", "value"))),
+				OnlyOfficeService.get().createDocumentKey("test", "123"));
+
+		assertThat(rsp.getStatus()).isEqualTo(400);
+	}
+
+	@Test
+	public void callback_withSecretAndMissingAuthorization_returnsBadRequest(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().callback(null, null, JsonNodeFactory.instance.objectNode());
+
+		assertThat(rsp.getStatus()).isEqualTo(400);
+	}
+
+	@Test
+	public void callback_withSignatureWithoutKey_returnsBadRequest(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
+
+		var rsp = new OnlyOfficeResource().callback(null, createBearerToken(Map.of("payload", Map.of("status", "2"))), null);
+
+		assertThat(rsp.getStatus()).isEqualTo(400);
+	}
+
+	@Test
 	public void loadDocument_withValidSignature_returnsDocument(AppFixture fix) throws IOException {
 		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", TEST_SECRET);
 		var key = OnlyOfficeService.get().createDocumentKey("test", "123");

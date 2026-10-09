@@ -336,10 +336,7 @@ public class OnlyOfficeService {
 		cmd.put("key", key);
 		cmd.put("userdata", userdata);
 
-		var token = createToken(cmd);
-
-		var node = MAPPER.createObjectNode();
-		node.put("token", token);
+		var node = hasOnlyOfficeJwtSecret() ? MAPPER.createObjectNode().put("token", createToken(cmd)) : MAPPER.valueToTree(cmd);
 		return command().request().buildPost(Entity.entity(node, MediaType.APPLICATION_JSON)).invoke();
 	}
 
@@ -378,7 +375,9 @@ public class OnlyOfficeService {
 			putIfAbsent(map, "editorConfig", "lang", lang.getLanguage());
 			putIfAbsent(map, "editorConfig", "user", "id", ivyUser.getSecurityMemberId());
 			putIfAbsent(map, "editorConfig", "user", "name", ivyUser.getDisplayName());
-			putIfAbsent(map, "token", createToken(map));
+			if(hasOnlyOfficeJwtSecret()) {
+				putIfAbsent(map, "token", createToken(map));
+			}
 
 			result = escapeForScript(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(map));
 		} catch (Exception e) {
