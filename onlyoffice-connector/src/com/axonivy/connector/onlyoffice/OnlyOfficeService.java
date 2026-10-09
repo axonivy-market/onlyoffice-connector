@@ -267,7 +267,8 @@ public class OnlyOfficeService {
 		var claims = extractClaims(token);
 
 		var node = MAPPER.valueToTree(claims);
-		return node.has("payload") ? node.get("payload") : node;
+		var payload = node.has("payload") ? node.get("payload") : node;
+		return payload.has("document") ? payload.get("document") : payload;
 	}
 
 	public static record DocumentEditId(String editGroup, String documentId) {
