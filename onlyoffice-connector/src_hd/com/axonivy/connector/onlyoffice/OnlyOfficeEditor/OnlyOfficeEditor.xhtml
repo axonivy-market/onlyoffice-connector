@@ -10,10 +10,10 @@
 </cc:interface>
 
 <cc:implementation>
-		<div id="onlyofficePlaceholder"/>
+		<div id="#{cc.clientId}_onlyofficePlaceholder"></div>
 		<script>
 			var config = #{onlyoffice.putIfAbsentAndSign(cc.attrs.editGroup, cc.attrs.documentId, cc.attrs.fileName, cc.attrs.configuration)};
-			var docEditor = new DocsAPI.DocEditor("onlyofficePlaceholder", config);
+			var docEditor = new DocsAPI.DocEditor("#{cc.clientId}_onlyofficePlaceholder", config);
 		</script>
 </cc:implementation>
 </html>
