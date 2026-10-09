@@ -1,0 +1,196 @@
+package com.axonivy.connector.onlyoffice;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.ivyteam.ivy.environment.AppFixture;
+import ch.ivyteam.ivy.environment.IvyTest;
+
+@IvyTest
+class OnlyOfficeServiceTest {
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private final OnlyOfficeService service = OnlyOfficeService.get();
+
+
+	@Test
+	void extractDocumentEditId_withCreatedKey_returnsEditGroupAndDocumentId() {
+		var documentId = "doc-123";
+		var editGroup = "group-a";
+
+		var key = service.createDocumentKey(editGroup, documentId);
+
+		assertNotNull(key);
+		var dei = service.extractDocumentEditId(key);
+
+		assertThat(dei.toList()).containsExactly(editGroup, documentId);
+		assertThat(dei.editGroup()).isEqualTo(editGroup);
+		assertThat(dei.documentId()).isEqualTo(documentId);
+	}
+
+	@Test
+	void extractDocumentEditId_withInvalidKey_throwsException() {
+		assertThrows(RuntimeException.class, () -> service.extractDocumentEditId("not-a-valid-key"));
+	}
+
+	@Test
+	void putIfAbsent_withInvalidParameters_throwsException() {
+		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null));
+		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(new LinkedHashMap<>()));
+		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(new LinkedHashMap<>(), "key"));
+		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null, "key"));
+		assertThrows(IllegalArgumentException.class, () -> service.putIfAbsent(null, "key", "value"));
+	}
+
+	@Test
+	void encryptDecrypt_withUmlauts_roundTrip(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var org = "This is a test even with umlauts: \u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df";
+		var enc = OnlyOfficeService.get().encrypt(org);
+		assertThat(enc).isNotEqualTo(org);
+		var dec = OnlyOfficeService.get().decrypt(enc);
+		assertThat(dec).isEqualTo(org);
+	}
+
+	@Test
+	void encrypt_withSameInput_producesDifferentCiphertext(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var enc1 = service.encrypt("same input");
+		var enc2 = service.encrypt("same input");
+		assertThat(enc1).isNotEqualTo(enc2);
+		assertThat(service.decrypt(enc1)).isEqualTo("same input");
+		assertThat(service.decrypt(enc2)).isEqualTo("same input");
+	}
+
+	@Test
+	void decrypt_withTamperedInput_throwsException(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+		var bytes = java.util.Base64.getUrlDecoder().decode(service.encrypt("secret content"));
+		bytes[bytes.length - 1] ^= 1;
+		var tampered = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+		assertThrows(RuntimeException.class, () -> service.decrypt(tampered));
+		assertThrows(RuntimeException.class, () -> service.decrypt("short"));
+	}
+
+	@Test
+	void escapeForScript_withScriptBreakingCharacters_escapesThemAndKeepsJsonValid() throws JsonProcessingException {
+		var title = "</script><img src=x onerror=alert(1)>&'\u2028\u2029.docx";
+		var json = MAPPER.writeValueAsString(Map.of("document", Map.of("title", title)));
+
+		var escaped = OnlyOfficeService.escapeForScript(json);
+
+		assertThat(escaped).doesNotContain("<", ">", "&", "'", "\u2028", "\u2029");
+		assertThat(MAPPER.readTree(escaped).at("/document/title").asText()).isEqualTo(title);
+	}
+
+	@Test
+	void putIfAbsentAndSign_withError_returnsEmptyObjectInsteadOfErrorMessage(AppFixture fix) {
+		fix.var("com.axonivy.connector.onlyoffice.jwtsecret", "APasswordWithAtLeast32Characters!");
+
+		var result = service.putIfAbsentAndSign("group", "doc", "file.docx", "</script>{not json");
+
+		assertThat(result).isEqualTo("{}");
+	}
+
+	@Test
+	void putIfAbsent_withValidParameters_buildsNestedMap() throws JsonProcessingException {
+		var map = new LinkedHashMap<String, Object>();
+
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo("{}");
+
+		service.putIfAbsent(map, "document", "fileType", "file-type");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type"
+					}
+				}
+				"""));
+
+		service.putIfAbsent(map, "document", "key", "document-key");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type",
+						"key": "document-key"
+					}
+				}
+				"""));
+
+		service.putIfAbsent(map, "editorConfig", "callbackUrl", "callback-url");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type",
+						"key": "document-key"
+					},
+					"editorConfig": {
+						"callbackUrl": "callback-url"
+					}
+				}
+				"""));
+
+		service.putIfAbsent(map, "editorConfig", "user", "id", "user-id");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type",
+						"key": "document-key"
+					},
+					"editorConfig": {
+						"callbackUrl": "callback-url",
+						"user": {
+							"id": "user-id"
+						}
+					}
+				}
+				"""));
+
+		service.putIfAbsent(map, "editorConfig", "user", "name", "user-name");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type",
+						"key": "document-key"
+					},
+					"editorConfig": {
+						"callbackUrl": "callback-url",
+						"user": {
+							"id": "user-id",
+							"name": "user-name"
+						}
+					}
+				}
+				"""));
+
+		service.putIfAbsent(map, "token", "token");
+		assertThat(MAPPER.writer().writeValueAsString(map)).isEqualTo(compact("""
+				{
+					"document": {
+						"fileType": "file-type",
+						"key": "document-key"
+					},
+					"editorConfig": {
+						"callbackUrl": "callback-url",
+						"user": {
+							"id": "user-id",
+							"name": "user-name"
+						}
+					},
+					"token": "token"
+				}
+				"""));
+	}
+
+	protected String compact(String json) {
+		return json.replaceAll("\\s", "");
+	}
+}

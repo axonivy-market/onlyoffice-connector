@@ -1,0 +1,34 @@
+services:
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:9.4
+    container_name: onlyoffice_ds
+    hostname: onlyofficeds
+    restart: unless-stopped
+    ports:
+      - "81:80"
+      - "444:443"
+      - "8000:8000"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_cache:/var/lib/onlyoffice
+      - onlyoffice_db:/var/lib/postgresql
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=UseAPasswordWithAtLeast32Characters
+      - JWT_HEADER=Authorization
+      - JWT_IN_BODY=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+volumes:
+  onlyoffice_data:
+    name: onlyoffice_data
+  onlyoffice_logs:
+    name: onlyoffice_logs
+  onlyoffice_cache:
+    name: onlyoffice_cache
+  onlyoffice_db:    
+    name: onlyoffice_db

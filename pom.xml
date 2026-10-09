@@ -1,20 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.axonivy.market</groupId>
-  <name>MY-PRODUCT-NAME</name>
-  <artifactId>MY-PRODUCT-NAME-modules</artifactId>
-  <version>12.0.0-SNAPSHOT</version>
+  <groupId>com.axonivy.connector.onlyoffice</groupId>
+  <name>onlyoffice-connector</name>
+  <artifactId>onlyoffice-connector-modules</artifactId>
+  <version>12.0.16-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
-    <module>MY-PRODUCT-NAME</module>
-    <module>MY-PRODUCT-NAME-demo</module>
-    <module>MY-PRODUCT-NAME-test</module>
-    <module>MY-PRODUCT-NAME-product</module>
+    <module>onlyoffice-connector</module>
+    <module>onlyoffice-connector-demo</module>
+    <module>onlyoffice-connector-test</module>
+    <module>onlyoffice-connector-product</module>
   </modules>
 
   <scm>
-    <developerConnection>scm:git:https://github.com/axonivy-market/MY-PRODUCT-NAME.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/axonivy-market/onlyoffice-connector.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 

@@ -1,0 +1,47 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:ic="http://ivyteam.ch/jsf/component" xmlns:p="http://primefaces.org/ui" xmlns:pe="http://primefaces.org/ui/extensions">
+<h:body>
+	<ui:composition template="/layouts/frame-10-full-width.xhtml">
+		<ui:define name="title">Document Rework</ui:define>
+		<ui:define name="content">
+			<ic:com.axonivy.connector.onlyoffice.OnlyOfficeScript />
+			<h:form>
+				<p:growl />
+				<div class="grid">
+					<div class="col-12 md:col-12 lg:col-12">
+						<h1>Please rework document</h1>
+					</div>
+				</div>
+				<div class="grid">
+					<div class="col-12 md:col-12 lg:col-12" style="height: 800px;">
+						<p:outputPanel rendered="#{data.document == null}">
+							Document was not found. UUID: #{data.documentId}
+						</p:outputPanel>
+						<p:outputPanel rendered="#{data.document != null}">
+							<div style="height: 800px">
+								<ic:com.axonivy.connector.onlyoffice.OnlyOfficeEditor
+									editGroup="#{data.editGroup}"
+									documentId="#{data.documentId}"
+									fileName="#{data.document.name}" 
+									configuration='{
+										"document": {
+											"permissions": {
+												"chat": true
+											}
+										}
+									}
+								'/>
+							</div>
+						</p:outputPanel>
+					</div>
+				</div>
+				<div class="command-btns">
+					<p:commandLink id="cancel" actionListener="#{ivyWorkflowView.cancel()}" process="@this" value="Cancel" />
+					<p:commandButton id="proceed" actionListener="#{logic.close}" value="Proceed" update="@form" icon="pi pi-check" />
+				</div>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</h:body>
+
+</html>

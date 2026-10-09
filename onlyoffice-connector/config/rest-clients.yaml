@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://json-schema.axonivy.com/app/12.0.0/rest-clients.json
+RestClients:
+  OnlyOffice:
+    UUID: 37a13dba-9085-4c3b-a2bf-6694927b75de
+    Url: PLACEHOLDER_WILL_BE_REPLACED
+    Features:
+    - ch.ivyteam.ivy.rest.client.mapper.JsonFeature
+    - com.axonivy.connector.onlyoffice.OnlyOfficeFeature
