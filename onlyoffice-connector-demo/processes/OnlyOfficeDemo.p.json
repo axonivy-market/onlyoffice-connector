@@ -22,7 +22,7 @@
         "demo"
       ],
       "visual" : {
-        "at" : { "x" : 96, "y" : 128 }
+        "at" : { "x" : 96, "y" : 296 }
       },
       "connect" : [
         { "id" : "f2", "to" : "f5" }
@@ -31,7 +31,7 @@
       "id" : "f1",
       "type" : "TaskEnd",
       "visual" : {
-        "at" : { "x" : 704, "y" : 128 },
+        "at" : { "x" : 704, "y" : 296 },
         "labelOffset" : { "x" : 13, "y" : 33 }
       }
     }, {
@@ -54,7 +54,7 @@
         }
       },
       "visual" : {
-        "at" : { "x" : 224, "y" : 128 }
+        "at" : { "x" : 224, "y" : 296 }
       },
       "connect" : [
         { "id" : "f6", "to" : "f7", "color" : "default", "var" : "in1" }
@@ -78,12 +78,12 @@
           } ]
       },
       "visual" : {
-        "at" : { "x" : 352, "y" : 128 },
+        "at" : { "x" : 352, "y" : 296 },
         "labelOffset" : { "x" : 14, "y" : 34 }
       },
       "connect" : [
-        { "id" : "f8", "to" : "f9", "via" : [ { "x" : 392, "y" : 64 } ], "color" : "default", "condition" : "ivp==\"TaskA.ivp\"" },
-        { "id" : "f12", "to" : "f11", "via" : [ { "x" : 392, "y" : 192 } ], "condition" : "ivp==\"TaskB.ivp\"" }
+        { "id" : "f8", "to" : "f9", "via" : [ { "x" : 392, "y" : 232 } ], "color" : "default", "condition" : "ivp==\"TaskA.ivp\"" },
+        { "id" : "f12", "to" : "f11", "via" : [ { "x" : 392, "y" : 360 } ], "condition" : "ivp==\"TaskB.ivp\"" }
       ]
     }, {
       "id" : "f9",
@@ -99,10 +99,10 @@
         }
       },
       "visual" : {
-        "at" : { "x" : 480, "y" : 64 }
+        "at" : { "x" : 480, "y" : 232 }
       },
       "connect" : [
-        { "id" : "f10", "to" : "f13", "via" : [ { "x" : 568, "y" : 64 } ], "color" : "default", "var" : "in1" }
+        { "id" : "f10", "to" : "f13", "via" : [ { "x" : 568, "y" : 232 } ], "color" : "default", "var" : "in1" }
       ]
     }, {
       "id" : "f11",
@@ -118,10 +118,10 @@
         }
       },
       "visual" : {
-        "at" : { "x" : 480, "y" : 192 }
+        "at" : { "x" : 480, "y" : 360 }
       },
       "connect" : [
-        { "id" : "f15", "to" : "f13", "via" : [ { "x" : 568, "y" : 192 } ], "var" : "in2" }
+        { "id" : "f15", "to" : "f13", "via" : [ { "x" : 568, "y" : 360 } ], "var" : "in2" }
       ]
     }, {
       "id" : "f13",
@@ -132,7 +132,7 @@
           } ]
       },
       "visual" : {
-        "at" : { "x" : 608, "y" : 128 },
+        "at" : { "x" : 608, "y" : 296 },
         "labelOffset" : { "x" : 14, "y" : 34 }
       },
       "connect" : [
@@ -155,7 +155,7 @@
         }
       },
       "visual" : {
-        "at" : { "x" : 176, "y" : 384 },
+        "at" : { "x" : 176, "y" : 624 },
         "size" : { "width" : 26, "height" : 26 },
         "labelOffset" : { "x" : 35 },
         "color" : "optional"
@@ -167,7 +167,7 @@
       "id" : "f21",
       "type" : "CallSubEnd",
       "visual" : {
-        "at" : { "x" : 320, "y" : 384 },
+        "at" : { "x" : 320, "y" : 624 },
         "labelOffset" : { "x" : 13, "y" : 33 },
         "color" : "optional"
       }
@@ -183,17 +183,33 @@
         "This example sets a specific handler, which clears the cached document edit group whenever the last editor leaves the document editor. Please see the demo section in our documentation for an explanation."
       ],
       "visual" : {
-        "at" : { "x" : 176, "y" : 272 },
+        "at" : { "x" : 176, "y" : 496 },
         "size" : { "width" : 304, "height" : 180 },
         "color" : "optional"
       },
       "connect" : [
         { "id" : "f17", "to" : "f18", "color" : "optional" }
       ]
+    }, {
+      "id" : "f3",
+      "type" : "ProcessAnnotation",
+      "name" : [
+        "Note:",
+        "",
+        "The edit group is cached as long as anybody is working on the document, even when they cancel the task and open it again at a later time.",
+        "",
+        "Whenever the last person closes the document, the edit group can no longer be used. It will be removed from the cache and the next editor will create a new one. This is the reason, why the edit group is determined when the dialog opens and not before the two tasks are created."
+      ],
+      "visual" : {
+        "at" : { "x" : 479, "y" : 103 },
+        "size" : { "width" : 295, "height" : 179 },
+        "color" : "note"
+      }
     } ],
   "layout" : {
     "colors" : {
-      "optional" : "#0071c7"
+      "optional" : "#0071c7",
+      "note" : "#0071c7"
     }
   }
 }

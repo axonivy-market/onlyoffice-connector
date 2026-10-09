@@ -21,17 +21,20 @@ public class DemoService {
 	 * @return
 	 */
 	public String getEditGroup(String documentId) {
-		String editGroup = null;
-		var key = "%s.%s".formatted(EDITGROUP, documentId);
-		var entry = cache().getEntry(CACHE_GROUP, key);
-		if(entry == null || !entry.isValid()) {
-			editGroup = UUID.randomUUID().toString();
-			cache().setEntry(CACHE_GROUP, key, editGroup);
+		// Only for demonstration. In a cluster environment, a more elaborate locking mechanism is needed.
+		synchronized (DemoService.class) {
+			String editGroup = null;
+			var key = "%s.%s".formatted(EDITGROUP, documentId);
+			var entry = cache().getEntry(CACHE_GROUP, key);
+			if(entry == null || !entry.isValid()) {
+				editGroup = UUID.randomUUID().toString();
+				cache().setEntry(CACHE_GROUP, key, editGroup);
+			}
+			else {
+				editGroup = (String) entry.getValue();
+			}
+			return editGroup;
 		}
-		else {
-			editGroup = (String) entry.getValue();
-		}
-		return editGroup;
 	}
 
 	/**
@@ -40,10 +43,13 @@ public class DemoService {
 	 * @param documentId
 	 */
 	public void clearEditGroup(String documentId) {
-		var key = "%s.%s".formatted(EDITGROUP, documentId);
-		var entry = cache().getEntry(CACHE_GROUP, key);
-		if(entry != null) {
-			entry.invalidate();
+		// Only for demonstration. In a cluster environment, a more elaborate locking mechanism is needed.
+		synchronized (DemoService.class) {
+			var key = "%s.%s".formatted(EDITGROUP, documentId);
+			var entry = cache().getEntry(CACHE_GROUP, key);
+			if(entry != null) {
+				entry.invalidate();
+			}
 		}
 	}
 
