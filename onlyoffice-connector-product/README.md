@@ -87,7 +87,7 @@ In this example, **User A** and **User B** edit the same document at the same ti
 
 ## Setup
 
-To set up the connector, you need access to an ONLYOFFICE Document Server. The demo project includes a `docker-compose` setup for this purpose. You can start the Docker server by changing into the directory containing the `compose.yaml` file and executing the command:
+To set up the connector, you need access to an ONLYOFFICE Document Server. The demo project includes a `docker-compose` setup for this purpose. This setup was created with [Rancher Desktop](https://rancherdesktop.io/). Your docker setup might require additional settings to allow your containers to access your host under the name `host.docker.internal`. You can start the Docker server by changing into the directory containing the `compose.yaml` file and executing the command:
 
 `docker-compose up`
 
